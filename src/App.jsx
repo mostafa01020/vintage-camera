@@ -296,8 +296,11 @@ export default function App() {
                   return (
                     <div key={id} className="flex gap-4 items-center">
                       <div className="w-20 h-20 rounded-lg border border-black/20 flex-shrink-0" style={{ backgroundColor: product.bg }}>
-                        <img src={ART[product.art](product.accent)} className="w-full h-full object-contain p-2" alt={product.name} />
-                      </div>
+                     <img 
+                       src={product.image ? product.image : ART[product.art](product.accent)} 
+                       className={`w-full h-full object-contain ${product.image ? 'p-1' : 'p-2'}`} 
+                       alt={product.name} 
+                      />                      </div>
                       <div className="flex-1">
                         <h4 className="font-bold text-sm">{product.name}</h4>
                         <p className="text-xs text-black/60">{mxn(product.price)}</p>
