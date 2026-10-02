@@ -1,19 +1,36 @@
-import { useState } from "react";
-import { ShoppingBag, Plus, Check } from "lucide-react";
-import polaroidImg from './assets/img/polaroid.png';
-import bottleImg from './assets/img/bottle.png';
-import headphonesImg from './assets/img/headphones.png';
+import { useState, useEffect, useRef } from "react";
+import { ShoppingBag, Plus, Minus, Check, X } from "lucide-react";
+import polaroidImg from "./assets/img/polaroid.png";
+
 /* ------------------------------------------------------------------ *
- * Fonts: add once to index.html <head> (or keep the @import below):
- *   Playfair Display (900) for headers, Instrument Sans for details.
+ * Fonts: Playfair Display (headers) + Instrument Sans (details).
+ * Loaded once via a <link> injected into <head>. If you prefer, move
+ * the same URL into index.html and delete useFonts().
  * ------------------------------------------------------------------ */
-const FONT_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Playfair+Display:wght@800;900&display=swap');
+const FONT_URL =
+  "https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Playfair+Display:wght@800;900&display=swap";
+
+const BASE_CSS = `
 .font-display{font-family:'Playfair Display','Times New Roman',serif}
 .font-ui{font-family:'Instrument Sans',system-ui,sans-serif}
+@keyframes drawer-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.drawer-in{animation:drawer-in .3s ease-out}
+@media (prefers-reduced-motion:reduce){.drawer-in{animation:none}}
 `;
 
+function useFonts() {
+  useEffect(() => {
+    if (document.getElementById("archivo-fonts")) return;
+    const link = document.createElement("link");
+    link.id = "archivo-fonts";
+    link.rel = "stylesheet";
+    link.href = FONT_URL;
+    document.head.appendChild(link);
+  }, []);
+}
+
 const BRAND = "Archivo";
+const ACCENT = "#c7351f"; // darkened for WCAG AA contrast with white text
 
 /* ---------- Inline SVG "product photos" (no remote assets) ---------- */
 const svgUri = (inner) =>
@@ -68,17 +85,15 @@ const ART = {
     ),
 };
 
-/* ---------- Mock data ---------- */
+const imgSrc = (item) => (item.image ? item.image : ART[item.art](item.accent));
+
 /* ---------- Mock data ---------- */
 const PRODUCTS = [
-  // Real Products
-  // Real Products with Vibrant Style Colors
   { id: 1, name: "Polaroid OneStep", subtitle: "Vintage instant camera", price: 1500, badge: "Popular", bg: "#E8792F", image: polaroidImg, alt: "Polaroid OneStep camera", tags: ["Instant", "Polaroid", "Cameras"] },
-  { id: 2, name: "Clear Glass Bottle", subtitle: "Minimalist empty bottle", price: 250, badge: "New", bg: "#CFC6B2", image: bottleImg, alt: "Clear glass bottle on dark background", tags: ["Glass", "Decor", "Minimal"] },
-  { id: 3, name: "Pro Gaming Headphones", subtitle: "Wireless studio headset", price: 3200, badge: "Pro", bg: "#DC5A2C", image: headphonesImg, alt: "Metallic gaming headphones on black background", tags: ["Audio", "Headphones", "Gaming"] },
-  // Remaining Mock Products
+  { id: 2, name: "Pentax K1000", subtitle: "1970s manual 35mm SLR", price: 4200, badge: "New", bg: "#CFC6B2", art: "camera", accent: "#2b2a28", alt: "Black Pentax K1000 film SLR camera with standard lens", tags: ["1970s", "35mm", "Cameras", "Pentax"] },
+  { id: 3, name: "Kodak Portra 400", subtitle: "35mm daylight colour", price: 420, badge: "Pro", bg: "#DC5A2C", art: "film", accent: "#e9c36a", alt: "Canister of Kodak Portra 400 35mm colour film", tags: ["35mm", "Color", "Film", "Kodak"] },
   { id: 4, name: "Canon EOS Elan 7E", subtitle: "2000s autofocus SLR", price: 8500, badge: "Pro", bg: "#CFC6B2", art: "camera", accent: "#2b2a28", alt: "Black Canon EOS Elan 7E film SLR camera with standard lens", tags: ["2000s", "35mm", "Cameras", "Canon"] },
-  { id: 5, name: "Philm Daytime 100", subtitle: "35mm daylight colour", price: 350, badge: "New", bg: "#DC5A2C", art: "film", accent: "#e9c36a", alt: "Canister of Philm Daytime 100 35mm colour film", tags: ["35mm", "Color", "Film", "Philm"] },
+  { id: 5, name: "Kodak Gold 200", subtitle: "35mm daylight colour", price: 350, badge: "New", bg: "#DC5A2C", art: "film", accent: "#e9c36a", alt: "Canister of Kodak Gold 200 35mm colour film", tags: ["35mm", "Color", "Film", "Kodak"] },
   { id: 6, name: "Leicaflex SL + Lens", subtitle: "1960s SLR, 50mm kit", price: 18000, badge: "Pro", bg: "#D8CDB6", art: "camera", accent: "#c7c2b8", alt: "Silver Leicaflex SL camera body with mounted 50mm lens", tags: ["1960s", "35mm", "Cameras", "Leica"] },
   { id: 7, name: "Lomography Earl Grey", subtitle: "35mm black & white", price: 320, badge: null, bg: "#B9803F", art: "film", accent: "#c73a2b", alt: "Red Lomography Earl Grey 100 black and white film canister", tags: ["35mm", "Black & White", "Film", "Lomography"] },
   { id: 8, name: "Carl Zeiss Planar 50mm", subtitle: "C/Y mount prime lens", price: 9000, badge: "Mint", bg: "#E8D7A0", art: "lens", accent: "#7aa0b5", alt: "Carl Zeiss Planar 50mm lens seen from the front", tags: ["1970s", "50mm", "Carl Zeiss", "Lenses"] },
@@ -87,30 +102,47 @@ const PRODUCTS = [
 ];
 
 const STORIES = [
-  { id: "s1", name: "Slow Mornings in Oaxaca", subtitle: "A photographer and one roll of Portra", bg: "#E4A92B", art: "film", accent: "#d8402f", alt: "Film canister illustrating a story about shooting in Oaxaca", tags: ["Interview", "Mexico", "Portra"] },
-  { id: "s2", name: "Why Tungsten Stock Glows", subtitle: "Night street work on CineStill", bg: "#D9602B", art: "box", accent: "#8f1f1a", alt: "Red film box illustrating a story about tungsten film", tags: ["Guide", "Night", "CineStill"] },
-  { id: "s3", name: "Buying a Used SLR", subtitle: "What to check before you pay", bg: "#CFC6B2", art: "camera", accent: "#2b2a28", alt: "Film SLR illustrating a guide to buying used cameras", tags: ["Guide", "Cameras", "Checklist"] },
+  { id: "s1", name: "Slow Mornings in Oaxaca", subtitle: "A photographer and one roll of Portra", body: "Placeholder story: one roll, one week, and a habit of waiting for the light before pressing the shutter.", bg: "#E4A92B", art: "film", accent: "#d8402f", alt: "Film canister illustrating a story about shooting in Oaxaca", tags: ["Interview", "Mexico", "Portra"] },
+  { id: "s2", name: "Why Tungsten Stock Glows", subtitle: "Night street work on CineStill", body: "Placeholder story: how tungsten-balanced film turns streetlights into halos, and when to use it.", bg: "#D9602B", art: "box", accent: "#8f1f1a", alt: "Red film box illustrating a story about tungsten film", tags: ["Guide", "Night", "CineStill"] },
+  { id: "s3", name: "Buying a Used SLR", subtitle: "What to check before you pay", body: "Placeholder story: check the shutter at every speed, the light seals, the mirror and the viewfinder before you pay.", bg: "#CFC6B2", art: "camera", accent: "#2b2a28", alt: "Film SLR illustrating a guide to buying used cameras", tags: ["Guide", "Cameras", "Checklist"] },
 ];
 
 const TABS = ["Shop", "Discovery"];
-const mxn = (n) => `$ ${n.toLocaleString("en-US")} MXN`;
+
+const money = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  maximumFractionDigits: 0,
+});
+const mxn = (n) => `${money.format(n)} MXN`;
+
+const BADGE_STYLE = {
+  Popular: "bg-[#2f6fd6] text-white",
+  Pro: "bg-[#b8391c] text-white",
+  New: "bg-[#b8391c] text-white",
+  Mint: "bg-[#f4f0e6] text-black",
+};
+
+const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c7351f]";
 
 /* ---------- Pieces ---------- */
 function Card({ item, onAdd, added, isStory }) {
+  const [open, setOpen] = useState(false);
+
   return (
     <article className="font-ui flex flex-col gap-4 border-b border-r border-black p-5 sm:p-6">
       <div
         className="relative aspect-square overflow-hidden rounded-2xl border border-black/70"
         style={{ backgroundColor: item.bg }}
       >
-     <img
-          src={item.image ? item.image : ART[item.art](item.accent)}
+        <img
+          src={imgSrc(item)}
           alt={item.alt}
           loading="lazy"
-          className={`absolute inset-0 h-full w-full object-contain ${item.image ? 'p-4 drop-shadow-md' : 'p-[14%]'}`}
+          className={`absolute inset-0 h-full w-full object-contain ${item.image ? "p-4 drop-shadow-md" : "p-[14%]"}`}
         />
         {item.badge && (
-          <span className="absolute right-3 top-3 rounded-full bg-[#2f6fd6] px-3 py-1 text-[11px] font-medium text-white shadow-sm data-[k=Pro]:bg-[#e8684a] data-[k=New]:bg-[#e8684a] data-[k=Mint]:bg-[#f4f0e6] data-[k=Mint]:text-black" data-k={item.badge}>
+          <span className={`absolute right-3 top-3 rounded-full px-3 py-1 text-[11px] font-medium shadow-sm ${BADGE_STYLE[item.badge] || BADGE_STYLE.Popular}`}>
             {item.badge}
           </span>
         )}
@@ -122,9 +154,10 @@ function Card({ item, onAdd, added, isStory }) {
           {!isStory && <p className="shrink-0 text-sm font-medium tabular-nums">{mxn(item.price)}</p>}
         </div>
         <p className="mt-1 text-sm text-black/65">{item.subtitle}</p>
+        {isStory && open && <p id={`story-${item.id}`} className="mt-3 text-sm leading-6 text-black/80">{item.body}</p>}
       </div>
 
-      <ul className="flex flex-wrap gap-1.5" aria-label="Specifications">
+      <ul className="flex flex-wrap gap-1.5" aria-label={isStory ? "Topics" : "Specifications"}>
         {item.tags.map((t) => (
           <li key={t} className="rounded-full border border-black/40 px-2.5 py-0.5 text-[11px] text-black/75">
             {t}
@@ -135,195 +168,349 @@ function Card({ item, onAdd, added, isStory }) {
       {!isStory ? (
         <button
           type="button"
-          onClick={() => onAdd(item.id)}
+          onClick={() => onAdd(item)}
           aria-label={`Add ${item.name} to cart`}
-          className="mt-auto inline-flex w-fit items-center gap-1.5 rounded-full border border-black px-3.5 py-1.5 text-xs font-medium transition-colors hover:bg-black hover:text-[#F4F0E6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e8432f]"
+          className={`mt-auto inline-flex w-fit items-center gap-1.5 rounded-full border border-black px-3.5 py-1.5 text-xs font-medium transition-colors hover:bg-black hover:text-[#F4F0E6] ${FOCUS}`}
         >
           {added ? <Check size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
           {added ? "Added" : "Add to cart"}
         </button>
       ) : (
-        <a
-          href="#products"
-          className="mt-auto w-fit text-sm font-medium underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e8432f]"
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls={`story-${item.id}`}
+          className={`mt-auto w-fit text-sm font-medium underline underline-offset-4 ${FOCUS}`}
         >
-          Read story
-        </a>
+          {open ? "Show less" : "Read story"}
+        </button>
       )}
     </article>
   );
 }
 
+function CartDrawer({ cart, onClose, onChangeQty, onRemove, onCheckout, ordered }) {
+  const panelRef = useRef(null);
+  const closeRef = useRef(null);
+
+  const lines = Object.entries(cart)
+    .map(([id, qty]) => ({ product: PRODUCTS.find((p) => p.id === Number(id)), qty }))
+    .filter((l) => l.product);
+  const subtotal = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+  }, []);
+
+  // Escape closes; Tab is trapped inside the panel.
+  const onKeyDown = (e) => {
+    if (e.key === "Escape") {
+      onClose();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const focusables = panelRef.current.querySelectorAll("button:not([disabled]), a[href]");
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  return (
+    <div className="font-ui fixed inset-0 z-50 flex justify-end" onKeyDown={onKeyDown}>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-title"
+        className="drawer-in relative flex h-full w-full max-w-md flex-col border-l border-black bg-[#F4F0E6] shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-black p-5">
+          <h2 id="cart-title" className="font-display text-2xl font-black">Your cart</h2>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            className={`inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4 hover:text-[#c7351f] ${FOCUS}`}
+          >
+            <X size={14} aria-hidden="true" /> Close
+          </button>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-5">
+          {ordered ? (
+            <div className="mt-10 text-center" role="status">
+              <p className="font-display text-xl font-extrabold">Thanks for your order</p>
+              <p className="mt-2 text-sm text-black/65">This is a demo store, so no payment was taken.</p>
+            </div>
+          ) : lines.length === 0 ? (
+            <p className="mt-10 text-center text-black/65">Your cart is empty. Add something from the collection.</p>
+          ) : (
+            lines.map(({ product, qty }) => (
+              <div key={product.id} className="flex items-center gap-4">
+                <div className="h-20 w-20 flex-shrink-0 rounded-lg border border-black/20" style={{ backgroundColor: product.bg }}>
+                  <img src={imgSrc(product)} alt="" className={`h-full w-full object-contain ${product.image ? "p-1" : "p-2"}`} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-bold">{product.name}</h3>
+                  <p className="text-xs text-black/65">{mxn(product.price)}</p>
+                  <div className="mt-2 flex items-center gap-3">
+                    <div className="inline-flex items-center rounded-full border border-black">
+                      <button
+                        type="button"
+                        onClick={() => onChangeQty(product.id, -1)}
+                        aria-label={`Decrease quantity of ${product.name}`}
+                        className={`rounded-full p-1.5 hover:bg-black hover:text-[#F4F0E6] ${FOCUS}`}
+                      >
+                        <Minus size={12} aria-hidden="true" />
+                      </button>
+                      <span className="min-w-6 text-center text-xs font-bold tabular-nums" aria-label={`Quantity ${qty}`}>{qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => onChangeQty(product.id, 1)}
+                        aria-label={`Increase quantity of ${product.name}`}
+                        className={`rounded-full p-1.5 hover:bg-black hover:text-[#F4F0E6] ${FOCUS}`}
+                      >
+                        <Plus size={12} aria-hidden="true" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onRemove(product.id)}
+                      aria-label={`Remove ${product.name} from cart`}
+                      className={`text-xs underline underline-offset-4 hover:text-[#c7351f] ${FOCUS}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm font-bold tabular-nums">{mxn(product.price * qty)}</p>
+              </div>
+            ))
+          )}
+        </div>
+
+        {!ordered && lines.length > 0 && (
+          <div className="border-t border-black p-5">
+            <div className="mb-4 flex items-baseline justify-between">
+              <span className="text-sm font-medium">Subtotal</span>
+              <span className="text-lg font-bold tabular-nums">{mxn(subtotal)}</span>
+            </div>
+            <button
+              type="button"
+              onClick={onCheckout}
+              className={`w-full rounded-full bg-black py-3.5 text-sm font-bold text-[#F4F0E6] transition-colors hover:bg-[#c7351f] ${FOCUS}`}
+            >
+              Place order
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  useFonts();
+
   const [tab, setTab] = useState("Shop");
   const [cart, setCart] = useState({});
   const [flash, setFlash] = useState(null);
+  const [announce, setAnnounce] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [ordered, setOrdered] = useState(false);
+
+  const flashTimer = useRef(null);
+  const cartBtnRef = useRef(null);
+  const tabRefs = useRef({});
 
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
-  const add = (id) => {
-    setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 }));
-    setFlash(id);
-    setTimeout(() => setFlash(null), 1200);
+  const items = tab === "Shop" ? PRODUCTS : STORIES;
+
+  const add = (item) => {
+    setCart((c) => ({ ...c, [item.id]: (c[item.id] || 0) + 1 }));
+    setFlash(item.id);
+    setAnnounce(`${item.name} added to cart`);
+    clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 1200);
   };
 
-  const items = tab === "Shop" ? PRODUCTS : STORIES;
+  const changeQty = (id, delta) =>
+    setCart((c) => {
+      const next = (c[id] || 0) + delta;
+      if (next <= 0) {
+        const { [id]: _removed, ...rest } = c;
+        return rest;
+      }
+      return { ...c, [id]: next };
+    });
+
+  const remove = (id) =>
+    setCart((c) => {
+      const { [id]: _removed, ...rest } = c;
+      return rest;
+    });
+
+  const checkout = () => {
+    setCart({});
+    setOrdered(true);
+  };
+
+  const closeCart = () => {
+    setIsCartOpen(false);
+    setOrdered(false);
+    cartBtnRef.current?.focus();
+  };
+
+  // Clean up timer on unmount.
+  useEffect(() => () => clearTimeout(flashTimer.current), []);
+
+  // Lock page scroll while the cart is open.
+  useEffect(() => {
+    if (!isCartOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isCartOpen]);
+
+  // Arrow-key navigation for tabs.
+  const onTabKeyDown = (e, index) => {
+    let next = null;
+    if (e.key === "ArrowRight") next = (index + 1) % TABS.length;
+    if (e.key === "ArrowLeft") next = (index - 1 + TABS.length) % TABS.length;
+    if (e.key === "Home") next = 0;
+    if (e.key === "End") next = TABS.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    setTab(TABS[next]);
+    tabRefs.current[TABS[next]]?.focus();
+  };
 
   return (
     <div className="font-ui min-h-screen bg-[#F4F0E6] text-[#1b1917]">
-      <style>{FONT_CSS}</style>
+      <style>{BASE_CSS}</style>
+
+      <div className="sr-only" role="status" aria-live="polite">{announce}</div>
 
       <header className="flex items-center justify-between px-5 py-4 sm:px-8">
-        <a href="#hero" className="text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e8432f]">
+        <a href="#hero" className={`text-sm font-semibold ${FOCUS}`}>
           {BRAND}
         </a>
         <button
+          ref={cartBtnRef}
           type="button"
           onClick={() => setIsCartOpen(true)}
-          aria-label={`Cart, ${count} items`}
-          className="inline-flex items-center gap-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e8432f]"
+          aria-haspopup="dialog"
+          aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}
+          className={`inline-flex items-center gap-2 text-sm font-medium ${FOCUS}`}
         >
           <ShoppingBag size={18} aria-hidden="true" />
-          Cart{count > 0 && <span className="rounded-full bg-black px-2 py-0.5 text-[11px] text-[#F4F0E6]">{count}</span>}
+          Cart
+          {count > 0 && (
+            <span className="rounded-full bg-black px-2 py-0.5 text-[11px] text-[#F4F0E6]" aria-hidden="true">
+              {count}
+            </span>
+          )}
         </button>
       </header>
 
-      <section id="hero" aria-labelledby="hero-title" className="px-3 sm:px-6">
-        <h1
-          id="hero-title"
-          className="font-display select-none text-center font-black leading-[0.85] tracking-[-0.045em]"
-          style={{ fontSize: "clamp(4.5rem, 24vw, 26rem)" }}
-        >
-          {BRAND}
-        </h1>
-      </section>
+      <main>
+        <section id="hero" aria-labelledby="hero-title" className="px-3 sm:px-6">
+          <h1
+            id="hero-title"
+            className="font-display text-center font-black leading-[0.85] tracking-[-0.045em]"
+            style={{ fontSize: "clamp(4.5rem, 24vw, 26rem)" }}
+          >
+            {BRAND}
+          </h1>
+        </section>
 
-      <section id="about" aria-labelledby="about-title" className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-8 sm:pt-14">
-        <h2 id="about-title" className="font-display mb-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
-          About us
-        </h2>
-        <p className="text-[15px] leading-7 text-black/80 sm:text-base sm:leading-8">
-          <strong className="font-semibold underline underline-offset-4">{BRAND}</strong> began as a celebration of our early
-          curiosity and our shared love for these objects. Inspiration and experience are two of many sensations we don't want
-          to let go of, which is why we keep a selected collection of cameras, lenses and film. We aim to educate ourselves, to
-          reuse and respect, to move slower and to conserve camera culture. Through Discovery, our own curated space, we show
-          the photographers who keep reinventing film.
-        </p>
-      </section>
-
-      <main id="products" className="px-0 sm:px-6">
-        <div className="mx-5 sm:mx-0">
-          <h2 className="font-display mb-6 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            {tab === "Shop" ? "The collection" : "Discovery"}
+        <section id="about" aria-labelledby="about-title" className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-8 sm:pt-14">
+          <h2 id="about-title" className="font-display mb-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            About us
           </h2>
+          <p className="text-[15px] leading-7 text-black/80 sm:text-base sm:leading-8">
+            <strong className="font-semibold underline underline-offset-4">{BRAND}</strong> began as a celebration of our early
+            curiosity and our shared love for these objects. Inspiration and experience are two of many sensations we don't want
+            to let go of, which is why we keep a selected collection of cameras, lenses and film. We aim to educate ourselves, to
+            reuse and respect, to move slower and to conserve camera culture. Through Discovery, our own curated space, we show
+            the photographers who keep reinventing film.
+          </p>
+        </section>
 
-          {/* Folder tabs */}
-          <div role="tablist" aria-label="Storefront sections" className="flex items-end gap-1 pl-3 sm:pl-10">
-            {TABS.map((t) => {
-              const active = tab === t;
-              return (
-                <button
-                  key={t}
-                  role="tab"
-                  type="button"
-                  id={`tab-${t}`}
-                  aria-selected={active}
-                  aria-controls="product-grid"
-                  onClick={() => setTab(t)}
-                  className={`relative -mb-px rounded-t-2xl border border-b-0 px-6 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e8432f] ${
-                    active
-                      ? "border-[#e8432f] bg-[#e8432f] pb-2.5 text-white"
-                      : "border-black bg-[#F4F0E6] hover:bg-black/5"
-                  }`}
-                >
-                  {t}
-                </button>
-              );
-            })}
+        <section id="products" aria-label="Storefront" className="px-0 sm:px-6">
+          <div className="mx-5 sm:mx-0">
+            <h2 className="font-display mb-6 text-3xl font-extrabold tracking-tight sm:text-4xl">
+              {tab === "Shop" ? "The collection" : "Discovery"}
+            </h2>
+
+            <div role="tablist" aria-label="Storefront sections" className="flex items-end gap-1 pl-3 sm:pl-10">
+              {TABS.map((t, i) => {
+                const active = tab === t;
+                return (
+                  <button
+                    key={t}
+                    ref={(el) => (tabRefs.current[t] = el)}
+                    role="tab"
+                    type="button"
+                    id={`tab-${t}`}
+                    aria-selected={active}
+                    aria-controls="product-grid"
+                    tabIndex={active ? 0 : -1}
+                    onClick={() => setTab(t)}
+                    onKeyDown={(e) => onTabKeyDown(e, i)}
+                    className={`relative -mb-px rounded-t-2xl border border-b-0 px-6 py-2 text-sm font-medium transition-colors ${FOCUS} ${
+                      active
+                        ? "border-[#c7351f] bg-[#c7351f] pb-2.5 text-white"
+                        : "border-black bg-[#F4F0E6] hover:bg-black/5"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* Brutalist grid: container owns top/left, each cell owns bottom/right */}
-        <div
-          id="product-grid"
-          role="tabpanel"
-          aria-labelledby={`tab-${tab}`}
-          className="grid grid-cols-1 border-l border-t border-black sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {items.map((it) => (
-            <Card key={it.id} item={it} isStory={tab === "Discovery"} onAdd={add} added={flash === it.id} />
-          ))}
-        </div>
+          {/* Brutalist grid: container owns top/left, each cell owns bottom/right */}
+          <div
+            id="product-grid"
+            role="tabpanel"
+            aria-labelledby={`tab-${tab}`}
+            className="grid grid-cols-1 border-l border-t border-black sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {items.map((it) => (
+              <Card key={it.id} item={it} isStory={tab === "Discovery"} onAdd={add} added={flash === it.id} />
+            ))}
+          </div>
+        </section>
       </main>
 
-   
-
-      <footer className="flex flex-col items-start justify-between gap-2 px-5 py-6 text-xs sm:flex-row sm:items-center sm:px-8 border-t border-black">
+      <footer className="flex flex-col items-start justify-between gap-2 border-t border-black px-5 py-6 text-xs sm:flex-row sm:items-center sm:px-8">
         <span className="font-display text-lg font-black tracking-tight">{BRAND}</span>
         <small>© {new Date().getFullYear()} {BRAND}. All rights reserved.</small>
       </footer>
 
-      {/* Cart Drawer */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end font-ui">
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsCartOpen(false)}
-          ></div>
-          
-          {/* Cart Panel */}
-          <div className="relative w-full max-w-md bg-[#F4F0E6] h-full shadow-2xl flex flex-col border-l border-black animate-in slide-in-from-right duration-300">
-            {/* Cart Header */}
-            <div className="p-5 border-b border-black flex justify-between items-center bg-[#F4F0E6]">
-              <h2 className="font-display text-2xl font-black">Your Cart</h2>
-              <button 
-                onClick={() => setIsCartOpen(false)}
-                className="text-sm font-bold underline underline-offset-4 hover:text-[#e8432f]"
-              >
-                Close
-              </button>
-            </div>
-            
-            {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
-              {count === 0 ? (
-                <p className="text-black/60 text-center mt-10">Your cart is empty.</p>
-              ) : (
-                Object.entries(cart).map(([id, quantity]) => {
-                  const product = PRODUCTS.find((p) => p.id === parseInt(id));
-                  if (!product) return null;
-                  return (
-                    <div key={id} className="flex gap-4 items-center">
-                      <div className="w-20 h-20 rounded-lg border border-black/20 flex-shrink-0" style={{ backgroundColor: product.bg }}>
-                     <img 
-                       src={product.image ? product.image : ART[product.art](product.accent)} 
-                       className={`w-full h-full object-contain ${product.image ? 'p-1' : 'p-2'}`} 
-                       alt={product.name} 
-                      />                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-sm">{product.name}</h4>
-                        <p className="text-xs text-black/60">{mxn(product.price)}</p>
-                      </div>
-                      <div className="font-bold tabular-nums text-sm">
-                        x{quantity}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Checkout Button */}
-            {count > 0 && (
-              <div className="p-5 border-t border-black bg-[#F4F0E6]">
-                <button className="w-full bg-black text-[#F4F0E6] py-3.5 rounded-full font-bold text-sm hover:bg-[#e8432f] transition-colors">
-                  Checkout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <CartDrawer
+          cart={cart}
+          ordered={ordered}
+          onClose={closeCart}
+          onChangeQty={changeQty}
+          onRemove={remove}
+          onCheckout={checkout}
+        />
       )}
     </div>
   );
