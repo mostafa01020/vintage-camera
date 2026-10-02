@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ShoppingBag, Plus, Check } from "lucide-react";
-
+import polaroidImg from './assets/img/polaroid.png';
+import bottleImg from './assets/img/bottle.png';
+import headphonesImg from './assets/img/headphones.png';
 /* ------------------------------------------------------------------ *
  * Fonts: add once to index.html <head> (or keep the @import below):
  *   Playfair Display (900) for headers, Instrument Sans for details.
@@ -67,10 +69,14 @@ const ART = {
 };
 
 /* ---------- Mock data ---------- */
+/* ---------- Mock data ---------- */
 const PRODUCTS = [
-  { id: 1, name: "Kodak Portra 400", subtitle: "35mm colour negative", price: 500, badge: "Popular", bg: "#E4A92B", art: "film", accent: "#d8402f", alt: "Roll of Kodak Portra 400 35mm film in its canister", tags: ["35mm", "Color", "Film", "Kodak"] },
-  { id: 2, name: "Kodak Portra 800", subtitle: "35mm colour negative", price: 530, badge: "Popular", bg: "#E8792F", art: "box", accent: "#c9799b", alt: "Purple box of Kodak Portra 800 film on an orange backdrop", tags: ["35mm", "Color", "Film", "Kodak"] },
-  { id: 3, name: "CineStill 800Tungsten", subtitle: "35mm tungsten balanced", price: 500, badge: "Popular", bg: "#D9602B", art: "box", accent: "#8f1f1a", alt: "Red box of CineStill 800Tungsten 35mm film", tags: ["35mm", "CineStill", "Color", "Film"] },
+  // Real Products
+  // Real Products with Vibrant Style Colors
+  { id: 1, name: "Polaroid OneStep", subtitle: "Vintage instant camera", price: 1500, badge: "Popular", bg: "#E8792F", image: polaroidImg, alt: "Polaroid OneStep camera", tags: ["Instant", "Polaroid", "Cameras"] },
+  { id: 2, name: "Clear Glass Bottle", subtitle: "Minimalist empty bottle", price: 250, badge: "New", bg: "#CFC6B2", image: bottleImg, alt: "Clear glass bottle on dark background", tags: ["Glass", "Decor", "Minimal"] },
+  { id: 3, name: "Pro Gaming Headphones", subtitle: "Wireless studio headset", price: 3200, badge: "Pro", bg: "#DC5A2C", image: headphonesImg, alt: "Metallic gaming headphones on black background", tags: ["Audio", "Headphones", "Gaming"] },
+  // Remaining Mock Products
   { id: 4, name: "Canon EOS Elan 7E", subtitle: "2000s autofocus SLR", price: 8500, badge: "Pro", bg: "#CFC6B2", art: "camera", accent: "#2b2a28", alt: "Black Canon EOS Elan 7E film SLR camera with standard lens", tags: ["2000s", "35mm", "Cameras", "Canon"] },
   { id: 5, name: "Philm Daytime 100", subtitle: "35mm daylight colour", price: 350, badge: "New", bg: "#DC5A2C", art: "film", accent: "#e9c36a", alt: "Canister of Philm Daytime 100 35mm colour film", tags: ["35mm", "Color", "Film", "Philm"] },
   { id: 6, name: "Leicaflex SL + Lens", subtitle: "1960s SLR, 50mm kit", price: 18000, badge: "Pro", bg: "#D8CDB6", art: "camera", accent: "#c7c2b8", alt: "Silver Leicaflex SL camera body with mounted 50mm lens", tags: ["1960s", "35mm", "Cameras", "Leica"] },
@@ -97,11 +103,11 @@ function Card({ item, onAdd, added, isStory }) {
         className="relative aspect-square overflow-hidden rounded-2xl border border-black/70"
         style={{ backgroundColor: item.bg }}
       >
-        <img
-          src={ART[item.art](item.accent)}
+     <img
+          src={item.image ? item.image : ART[item.art](item.accent)}
           alt={item.alt}
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-contain p-[14%]"
+          className={`absolute inset-0 h-full w-full object-contain ${item.image ? 'p-4 drop-shadow-md' : 'p-[14%]'}`}
         />
         {item.badge && (
           <span className="absolute right-3 top-3 rounded-full bg-[#2f6fd6] px-3 py-1 text-[11px] font-medium text-white shadow-sm data-[k=Pro]:bg-[#e8684a] data-[k=New]:bg-[#e8684a] data-[k=Mint]:bg-[#f4f0e6] data-[k=Mint]:text-black" data-k={item.badge}>
@@ -250,23 +256,25 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="flex flex-col items-start justify-between gap-2 px-5 py-6 text-xs sm:flex-row sm:items-center sm:px-8">
+   
+
+      <footer className="flex flex-col items-start justify-between gap-2 px-5 py-6 text-xs sm:flex-row sm:items-center sm:px-8 border-t border-black">
         <span className="font-display text-lg font-black tracking-tight">{BRAND}</span>
         <small>© {new Date().getFullYear()} {BRAND}. All rights reserved.</small>
       </footer>
 
-      {/* 🛒 Cart Drawer (قائمة السلة الجانبية) 🛒 */}
+      {/* Cart Drawer */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 flex justify-end font-ui">
-          {/* الخلفية السودة الشفافة */}
+          {/* Overlay */}
           <div 
             className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setIsCartOpen(false)}
           ></div>
           
-          {/* شاشة السلة */}
+          {/* Cart Panel */}
           <div className="relative w-full max-w-md bg-[#F4F0E6] h-full shadow-2xl flex flex-col border-l border-black animate-in slide-in-from-right duration-300">
-            {/* هيدر السلة */}
+            {/* Cart Header */}
             <div className="p-5 border-b border-black flex justify-between items-center bg-[#F4F0E6]">
               <h2 className="font-display text-2xl font-black">Your Cart</h2>
               <button 
@@ -277,7 +285,7 @@ export default function App() {
               </button>
             </div>
             
-            {/* المنتجات اللي في السلة */}
+            {/* Cart Items */}
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
               {count === 0 ? (
                 <p className="text-black/60 text-center mt-10">Your cart is empty.</p>
@@ -303,7 +311,7 @@ export default function App() {
               )}
             </div>
 
-            {/* زرار الدفع */}
+            {/* Checkout Button */}
             {count > 0 && (
               <div className="p-5 border-t border-black bg-[#F4F0E6]">
                 <button className="w-full bg-black text-[#F4F0E6] py-3.5 rounded-full font-bold text-sm hover:bg-[#e8432f] transition-colors">
